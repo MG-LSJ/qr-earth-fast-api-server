@@ -11,7 +11,7 @@ db_username = urllib.parse.quote_plus(str(os.environ.get("db_username", "postgre
 db_password = urllib.parse.quote_plus(str(os.environ.get("db_password", "secret")))
 ssl_mode = urllib.parse.quote_plus(str(os.environ.get("ssl_mode", "prefer")))
 
-sqlite_url: str = "sqlite+aiosqlite:///db.sqlite3"
+# sqlite_url: str = "sqlite+aiosqlite:///db.sqlite3"
 pg_url: str = f"postgresql+asyncpg://{db_username}:{db_password}@{host_server}:{db_server_port}/{database_name}"
 
 asyncEngine = create_async_engine(
