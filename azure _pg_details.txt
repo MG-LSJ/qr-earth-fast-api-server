@@ -1,0 +1,2 @@
+admin usr = qrearthadmin
+pass = !krGu3kmPLS8

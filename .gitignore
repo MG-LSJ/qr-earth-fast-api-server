@@ -1,0 +1,4 @@
+__pycache__
+.venv
+.vscode
+azure_pg_details.txt
