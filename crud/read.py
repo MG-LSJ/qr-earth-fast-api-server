@@ -71,7 +71,7 @@ async def get_leaderboard(
 
 
 async def get_user_codes(
-    session: AsyncSession, user_id: uuid.UUID
+    session: AsyncSession, user_id: uuid.UUID, limit: int = 20
 ) -> list[database.models.QRCode] | None:
     """
     Get all codes for a user.
@@ -80,6 +80,7 @@ async def get_user_codes(
         select(database.models.User)
         .options(joinedload(database.models.User.codes))
         .filter(database.models.User.id == user_id)
+        .limit(limit)
     )
     result = await session.execute(stmt)
 

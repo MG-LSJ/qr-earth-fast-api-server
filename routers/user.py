@@ -121,11 +121,11 @@ async def get_user_by_phone_number(
     "/get/user/history/",
     response_model=list[schemas.QRCode],
 )
-async def get_user_history(user_id: uuid.UUID, db=Depends(get_db)):
+async def get_user_history(user_id: uuid.UUID, limit: int = 20, db=Depends(get_db)):
     """
     Get a user's history by user id.
     """
-    res = await crud.read.get_user_codes(session=db, user_id=user_id)
+    res = await crud.read.get_user_codes(session=db, user_id=user_id, limit=limit)
 
     if res is None:
         raise HTTPException(
