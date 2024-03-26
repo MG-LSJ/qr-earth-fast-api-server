@@ -4,7 +4,7 @@ async-timeout==4.0.3
 asyncpg==0.29.0
 click==8.1.7
 colorama==0.4.6
-fastapi==0.104.1
+fastapi==0.109.1
 greenlet==3.0.1
 gunicorn==21.2.0
 h11==0.14.0
