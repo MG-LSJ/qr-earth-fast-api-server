@@ -9,7 +9,7 @@ greenlet==3.0.1
 gunicorn==22.0.0
 h11==0.14.0
 httptools==0.6.1
-idna==3.4
+idna==3.7
 packaging==23.2
 pydantic==2.5.2
 pydantic_core==2.14.5
