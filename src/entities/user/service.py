@@ -1,3 +1,4 @@
+from datetime import datetime
 import uuid
 from src.entities.transaction.models import Transaction
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -77,3 +78,18 @@ class UserService:
         )
         result = await session.exec(statement)
         return result.all()
+
+    @staticmethod
+    async def redeem_user_points(session: AsyncSession, user: User, points: int):
+        user.points -= points
+        transaction = Transaction(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            amount=-points,
+            timestamp=datetime.now(),
+        )
+
+        session.add(transaction)
+        await session.commit()
+        await session.refresh(user)
+        return user

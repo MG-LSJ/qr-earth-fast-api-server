@@ -1,6 +1,7 @@
 from http import HTTPStatus
 import uuid
 from fastapi import APIRouter, HTTPException, Depends
+from src.config import Config
 from src.db.main import get_session
 from src.entities.transaction.models import Transaction
 from src.entities.user.models import User, UserCreate, UserLogin
@@ -127,3 +128,27 @@ async def get_user_transactions(
         raise HTTPException(status_code=404, detail="User not found")
 
     return await UserService.get_user_transactions(db_session, user.id, qunatiy)
+
+
+@user_router.get("/redeem", response_model=User)
+async def redeem_user_points(
+    user_id: uuid.UUID,
+    points: int,
+    admin_password: str,
+    db_session=Depends(get_session),
+):
+    if admin_password != Config.ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if points < 0:
+        raise HTTPException(status_code=400, detail="Points must be positive")
+
+    user = await UserService.get_user_by_id(db_session, user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.points < points:
+        raise HTTPException(status_code=400, detail="Insufficient points")
+
+    return await UserService.redeem_user_points(db_session, user, points)
