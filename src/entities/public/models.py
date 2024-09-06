@@ -3,4 +3,4 @@ from sqlmodel import SQLModel
 
 class UserLeaderboard(SQLModel, table=False):
     username: str
-    points: int
+    redeemed_code_count: int
