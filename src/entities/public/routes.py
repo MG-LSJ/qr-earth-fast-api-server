@@ -13,12 +13,12 @@ public_router = APIRouter()
     response_model=list[UserLeaderboard],
 )
 async def get_leaderboard(limit: int = 10, session=Depends(get_session)):
-    # response = []
-    # for user in :
-    #     response.append(
-    #         UserLeaderboard(
-    #             username=user.username,
-    #             points=user.points,
-    #         )
-    #     )
     return await PublicService.get_leaderboard(session, limit)
+
+
+@public_router.get(
+    "/total_users",
+    response_model=int,
+)
+async def get_total_users(session=Depends(get_session)):
+    return await PublicService.get_total_users(session)
