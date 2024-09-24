@@ -5,6 +5,8 @@ Currently deployed on azure
 
 Environemnt variables required to run:
 
+api docs: https://qr-earth-bthhbwfcbxcvfrbp.eastus-01.azurewebsites.net/docs
+
 ```py
     DB_HOST: str = "localhost"
     DB_PORT: str = "5432"
