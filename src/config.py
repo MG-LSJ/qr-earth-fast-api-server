@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     FIXED_CODE: str
     ADMIN_PASSWORD: str
 
+    MAIL_USRNAME: str
+    MAIL_PASSWORD: str
+    MAIL_SERVER: str
+    MAIL_FROM_EMAIL: str
+    MAIL_FROM_NAME: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

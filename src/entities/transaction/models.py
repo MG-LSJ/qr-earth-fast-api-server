@@ -18,11 +18,7 @@ class Transaction(SQLModel, table=True):
         ),
     )
     user_id: uuid.UUID = Field(
-        sa_column=Column(
-            pg.UUID,
-            nullable=False,
-            foreign_key=User.id,
-        ),
+        foreign_key="users.id",
     )
     amount: int
     timestamp: datetime = Field(

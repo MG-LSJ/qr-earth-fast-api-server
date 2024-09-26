@@ -6,7 +6,6 @@ from src.entities.code.models import QRCode, RedeemCodeRequest
 from src.entities.code.service import QRCOdeService
 from src.entities.user.service import UserService
 
-
 code_router = APIRouter()
 
 

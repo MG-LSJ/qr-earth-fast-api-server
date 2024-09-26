@@ -31,11 +31,8 @@ class QRCodeBase(SQLModel):
 class QRCode(QRCodeBase, table=True):
     user_id: uuid.UUID | None = Field(
         exclude=True,
-        sa_column=Column(
-            pg.UUID,
-            nullable=True,
-            foreign_key=User.id,
-        ),
+        default=None,
+        foreign_key="users.id",
     )
     redeemed: bool = False
     redeemed_at: datetime | None = Field(

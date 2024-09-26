@@ -1,14 +1,24 @@
 from http import HTTPStatus
 import uuid
+from datetime import timedelta, datetime
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import JSONResponse
+from src.auth.depedencies import UserAccessTokenBearer, UserRefreshTokenBearer
 from src.config import Config
 from src.db.main import get_session
 from src.entities.transaction.models import Transaction
-from src.entities.user.models import User, UserCreate, UserLogin
+from src.entities.user.models import LoginResponse, User, UserCreate, UserLogin
 from src.entities.user.service import UserService
-from src.utils import generate_password_hash, verify_password
+from src.auth.utils import (
+    generate_password_hash,
+    verify_password,
+    create_access_token,
+)
+from src.mail import create_message, mail_client
 
 user_router = APIRouter()
+user_access_token_bearer = UserAccessTokenBearer()
+REFRESH_TOKEN_EXPIRY = 2
 
 
 @user_router.post(
@@ -24,19 +34,22 @@ async def signup(
     # Check if user already exists
     if await UserService.get_user_by_username(db_session, user.username):
         raise HTTPException(
-            status_code=HTTPStatus.CONFLICT, detail="Username already exists"
+            status_code=HTTPStatus.CONFLICT,
+            detail="Username already exists",
         )
 
     if user.email and await UserService.get_user_by_email(db_session, user.email):
         raise HTTPException(
-            status_code=HTTPStatus.CONFLICT, detail="Email already registered"
+            status_code=HTTPStatus.CONFLICT,
+            detail="Email already registered",
         )
 
     if user.phone_number and await UserService.get_user_by_phone_number(
         db_session, user.phone_number
     ):
         raise HTTPException(
-            status_code=HTTPStatus.CONFLICT, detail="Phone number already registered"
+            status_code=HTTPStatus.CONFLICT,
+            detail="Phone number already registered",
         )
 
     new_user = User(**user.model_dump())
@@ -49,8 +62,8 @@ async def signup(
 
 @user_router.post(
     "/login",
-    response_model=User,
     status_code=200,
+    response_model=LoginResponse,
 )
 async def login(
     user: UserLogin,
@@ -101,31 +114,55 @@ async def login(
             detail="Wrong password",
         )
 
-    return existing_user
+    access_token = create_access_token(
+        user=existing_user,
+    )
+    refresh_token = create_access_token(
+        user=existing_user,
+        refresh=True,
+        expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
+    )
+
+    return JSONResponse(
+        content={
+            "message": "Login successful",
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": existing_user.model_dump(mode="json"),
+        },
+    )
 
 
 @user_router.get("/info", response_model=User)
 async def get_user_by_id(
-    user_id: uuid.UUID,
+    # user_id: uuid.UUID,
     db_session=Depends(get_session),
+    token_data: dict = Depends(user_access_token_bearer),
 ):
-    user = await UserService.get_user_by_id(db_session, user_id)
+    user = await UserService.get_user_by_id(db_session, token_data["user"]["id"])
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="User not found",
+        )
 
     return user
 
 
 @user_router.get("/transactions", response_model=list[Transaction])
 async def get_user_transactions(
-    user_id: uuid.UUID,
+    # user_id: uuid.UUID,
     qunatiy: int = 10,
     db_session=Depends(get_session),
+    token_data: dict = Depends(user_access_token_bearer),
 ):
-    user = await UserService.get_user_by_id(db_session, user_id)
+    user = await UserService.get_user_by_id(db_session, token_data["user"]["id"])
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="User not found",
+        )
 
     return await UserService.get_user_transactions(db_session, user.id, qunatiy)
 
@@ -136,19 +173,55 @@ async def redeem_user_points(
     points: int,
     admin_password: str,
     db_session=Depends(get_session),
+    token_data=Depends(user_access_token_bearer),
 ):
     if admin_password != Config.ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Unauthorized",
+        )
 
     if points < 0:
-        raise HTTPException(status_code=400, detail="Points must be positive")
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Points must be positive",
+        )
 
     user = await UserService.get_user_by_id(db_session, user_id)
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="User not found",
+        )
 
     if user.points < points:
-        raise HTTPException(status_code=400, detail="Insufficient points")
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Insufficient points",
+        )
 
     return await UserService.redeem_user_points(db_session, user, points)
+
+
+@user_router.get("/refresh_token")
+async def get_new_access_token(
+    token_data: dict = Depends(UserRefreshTokenBearer()),
+):
+    expiry_timestamp = token_data["exp"]
+    if datetime.fromtimestamp(expiry_timestamp) < datetime.now():
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Token expired",
+        )
+
+    access_token = create_access_token(
+        user=User(**token_data["user"]),
+    )
+
+    return JSONResponse(
+        content={
+            "message": "Access token",
+            "access_token": access_token,
+        }
+    )

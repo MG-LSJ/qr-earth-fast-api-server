@@ -25,7 +25,7 @@ def create_access_token(
     user: User, expiry: timedelta = ACCESS_TOKEN_EXPIRY, refresh: bool = False
 ) -> str:
     payload = {
-        "user": str(user.id),
+        "user": user.model_dump(mode="json"),
         "exp": datetime.now() + expiry,
         "jti": str(uuid.uuid4()),
         "refresh": refresh,

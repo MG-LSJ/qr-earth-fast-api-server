@@ -17,7 +17,7 @@ class UserCreate(UserBase):
 
 
 class UserLogin(UserCreate):
-    username: str | None = None
+    username: str | None
 
 
 class User(UserBase, table=True):
@@ -45,3 +45,10 @@ class User(UserBase, table=True):
 
     def __repr__(self) -> str:
         return f"<User {self.username} id {self.id}>"
+
+
+class LoginResponse(SQLModel):
+    message: str
+    access_token: str
+    refresh_token: str
+    user: User
