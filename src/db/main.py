@@ -1,8 +1,9 @@
-from sqlmodel import create_engine, SQLModel
+from sqlmodel import create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.config import Config
 from sqlalchemy.orm import sessionmaker
+
 
 DATABASE_URL = f"postgresql+asyncpg://{Config.DB_USER}:{Config.DB_PASSWORD}@{Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}"
 
@@ -15,13 +16,18 @@ engine = AsyncEngine(
 
 # Use run_migration to create tables
 
-# async def init_db():
-#     async with engine.begin() as conn:
-#         from src.entities.user.models import User
-#         from src.entities.code.models import QRCode
-#         from src.entities.transaction.models import Transaction
+from alembic import command, config
 
-#         await conn.run_sync(SQLModel.metadata.create_all)
+
+def __run_migrations(connection):
+    alembic_config = config.Config("alembic.ini")
+    alembic_config.attributes["connection"] = connection
+    command.upgrade(alembic_config, "head")
+
+
+async def migrate_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(__run_migrations)
 
 
 # SQL Model dosent support async natively
