@@ -1,8 +1,9 @@
 from http import HTTPStatus
 import uuid
-from datetime import timedelta, datetime
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
+from src.auth.constants import REFRESH_TOKEN_EXPIRY
 from src.auth.depedencies import UserAccessTokenBearer, UserRefreshTokenBearer
 from src.config import Config
 from src.db.main import get_session
@@ -14,11 +15,9 @@ from src.auth.utils import (
     verify_password,
     create_access_token,
 )
-from src.mail import create_message, mail_client
 
 user_router = APIRouter()
 user_access_token_bearer = UserAccessTokenBearer()
-REFRESH_TOKEN_EXPIRY = 2
 
 
 @user_router.post(
@@ -52,6 +51,11 @@ async def signup(
             detail="Phone number already registered",
         )
 
+    user.full_name = user.full_name.strip().upper()
+    user.username = user.username.strip().lower()
+    user.email = user.email.strip().lower() if user.email else None
+    user.phone_number = user.phone_number.strip() if user.phone_number else None
+
     new_user = User(**user.model_dump())
 
     # double hash the password
@@ -70,6 +74,10 @@ async def login(
     db_session=Depends(get_session),
 ):
     existing_user = None
+
+    user.username = user.username.strip().lower() if user.username else None
+    user.email = user.email.strip().lower() if user.email else None
+    user.phone_number = user.phone_number.strip() if user.phone_number else None
 
     if user.username:
         existing_user = await UserService.get_user_by_username(
@@ -120,7 +128,7 @@ async def login(
     refresh_token = create_access_token(
         user=existing_user,
         refresh=True,
-        expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
+        expiry=REFRESH_TOKEN_EXPIRY,
     )
 
     return JSONResponse(
@@ -135,7 +143,6 @@ async def login(
 
 @user_router.get("/info", response_model=User)
 async def get_user_by_id(
-    # user_id: uuid.UUID,
     db_session=Depends(get_session),
     token_data: dict = Depends(user_access_token_bearer),
 ):
@@ -167,7 +174,7 @@ async def get_user_transactions(
     return await UserService.get_user_transactions(db_session, user.id, qunatiy)
 
 
-@user_router.get("/redeem", response_model=User)
+@user_router.get("/redeem_points", response_model=User)
 async def redeem_user_points(
     user_id: uuid.UUID,
     points: int,
@@ -205,23 +212,24 @@ async def redeem_user_points(
 
 
 @user_router.get("/refresh_token")
-async def get_new_access_token(
+async def refresh_tokens(
     token_data: dict = Depends(UserRefreshTokenBearer()),
 ):
-    expiry_timestamp = token_data["exp"]
-    if datetime.fromtimestamp(expiry_timestamp) < datetime.now():
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail="Token expired",
-        )
 
     access_token = create_access_token(
         user=User(**token_data["user"]),
+    )
+
+    refresh_token = create_access_token(
+        user=User(**token_data["user"]),
+        refresh=True,
+        expiry=REFRESH_TOKEN_EXPIRY,
     )
 
     return JSONResponse(
         content={
             "message": "Access token",
             "access_token": access_token,
+            "refresh_token": refresh_token,
         }
     )

@@ -16,14 +16,14 @@ class UserTokenBearer(HTTPBearer):
         if creds is None:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
-                detail="Invalid token",
+                detail="No token provided",
             )
 
         token = creds.credentials
         token_data = decode_access_token(token)
         if not token_data:
             raise HTTPException(
-                status_code=HTTPStatus.FORBIDDEN,
+                status_code=HTTPStatus.UNAUTHORIZED,
                 detail="Invalid token",
             )
 
@@ -39,8 +39,8 @@ class UserAccessTokenBearer(UserTokenBearer):
     def verify_token_data(self, token_data: dict):
         if token_data["refresh"] == True:
             raise HTTPException(
-                status_code=HTTPStatus.FORBIDDEN,
-                detail="Invalid Access token",
+                status_code=HTTPStatus.UNAUTHORIZED,
+                detail="Invalid token",
             )
 
 
@@ -48,6 +48,6 @@ class UserRefreshTokenBearer(UserTokenBearer):
     def verify_token_data(self, token_data: dict):
         if token_data["refresh"] == False:
             raise HTTPException(
-                status_code=HTTPStatus.FORBIDDEN,
-                detail="Invalid Refresh token",
+                status_code=HTTPStatus.UNAUTHORIZED,
+                detail="Invalid token",
             )

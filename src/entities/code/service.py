@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Sequence
 import uuid
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -68,7 +68,7 @@ class QRCOdeService:
             id=uuid.uuid4(),
             user_id=user.id,
             amount=qr_code.value,
-            timestamp=datetime.now(),
+            timestamp=datetime.now(timezone.utc),
         )
         session.add(transaction)
         await session.commit()

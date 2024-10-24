@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import sqlalchemy.dialects.postgresql as pg
 import uuid
 from sqlmodel import Field, SQLModel, Column
@@ -23,7 +23,7 @@ class Transaction(SQLModel, table=True):
     amount: int
     timestamp: datetime = Field(
         sa_column=Column(
-            pg.TIMESTAMP,
-            default=datetime.now,
+            pg.TIMESTAMP(timezone=True),
+            default=lambda: datetime.now(timezone.utc),
         ),
     )

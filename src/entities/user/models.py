@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from sqlmodel import SQLModel, Field, Column
 import sqlalchemy.dialects.postgresql as pg
@@ -6,18 +6,19 @@ import sqlalchemy.dialects.postgresql as pg
 
 class UserBase(SQLModel):
     __tablename__ = "users"  # type: ignore
-
-    username: str
     email: str | None = Field(nullable=True)
     phone_number: str | None = Field(nullable=True)
 
 
 class UserCreate(UserBase):
+    username: str
     password: str
+    full_name: str
 
 
-class UserLogin(UserCreate):
+class UserLogin(UserBase):
     username: str | None
+    password: str
 
 
 class User(UserBase, table=True):
@@ -29,17 +30,17 @@ class User(UserBase, table=True):
             default=uuid.uuid4,
         )
     )
-
+    username: str
     hashed_password: str = Field(exclude=True)
-
+    full_name: str
     redeemed_code_count: int = Field(default=0)
     points: int = Field(default=0)
     deleted: bool = Field(default=False)
 
     created_at: datetime = Field(
         sa_column=Column(
-            pg.TIMESTAMP,
-            default=datetime.now,
+            pg.TIMESTAMP(timezone=True),
+            default=lambda: datetime.now(timezone.utc),
         ),
     )
 

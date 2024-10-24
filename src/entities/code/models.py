@@ -1,9 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from sqlmodel import SQLModel, Field, Column
 import sqlalchemy.dialects.postgresql as pg
-
-from src.entities.user.models import User
 
 
 class QRCodeBase(SQLModel):
@@ -20,8 +18,8 @@ class QRCodeBase(SQLModel):
 
     created_at: datetime = Field(
         sa_column=Column(
-            pg.TIMESTAMP,
-            default=datetime.now,
+            pg.TIMESTAMP(timezone=True),
+            default=lambda: datetime.now(timezone.utc),
         ),
     )
 
@@ -37,7 +35,7 @@ class QRCode(QRCodeBase, table=True):
     redeemed: bool = False
     redeemed_at: datetime | None = Field(
         sa_column=Column(
-            pg.TIMESTAMP,
+            pg.TIMESTAMP(timezone=True),
             default=None,
             nullable=True,
         ),

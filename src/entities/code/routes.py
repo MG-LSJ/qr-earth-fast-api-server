@@ -1,5 +1,7 @@
+from http import HTTPStatus
 import uuid
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import JSONResponse
 from src.config import Config
 from src.db.main import get_session
 from src.entities.code.models import QRCode, RedeemCodeRequest
@@ -9,14 +11,24 @@ from src.entities.user.service import UserService
 code_router = APIRouter()
 
 
-@code_router.get("/check_fixed")
+@code_router.get(
+    "/check_fixed",
+)
 async def check(fixed_code_id: str):
     if fixed_code_id == Config.FIXED_CODE:
-        return {"valid": True}
-    raise HTTPException(status_code=400, detail="Invalid code")
+        return JSONResponse(
+            content={"valid": True},
+        )
+    raise HTTPException(
+        status_code=HTTPStatus.NOT_FOUND,
+        detail="Invalid code",
+    )
 
 
-@code_router.get("/generate", response_model=QRCode)
+@code_router.get(
+    "/generate",
+    response_model=QRCode,
+)
 async def generate_code(
     admin_password: str,
     value: int = 10,
@@ -28,8 +40,14 @@ async def generate_code(
     return await QRCOdeService.generate_qr_code(session, value)
 
 
-@code_router.get("/validate", response_model=QRCode)
-async def validate_code(code_id: uuid.UUID, session=Depends(get_session)):
+@code_router.get(
+    "/info",
+    response_model=QRCode,
+)
+async def code_info(
+    code_id: uuid.UUID,
+    session=Depends(get_session),
+):
     qr_code = await QRCOdeService.get_qr_code_by_code(session, code_id)
 
     if qr_code is None:
@@ -38,7 +56,10 @@ async def validate_code(code_id: uuid.UUID, session=Depends(get_session)):
     return qr_code
 
 
-@code_router.post("/redeem", response_model=QRCode)
+@code_router.post(
+    "/redeem",
+    response_model=QRCode,
+)
 async def redeem_code(
     redeem_request: RedeemCodeRequest,
     session=Depends(get_session),

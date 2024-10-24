@@ -1,7 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 from passlib.context import CryptContext
 import jwt
+from src.auth.constants import ACCESS_TOKEN_EXPIRY
 from src.config import Config
 from src.entities.user.models import User
 import logging
@@ -9,8 +10,6 @@ import logging
 password_context = CryptContext(
     schemes=["bcrypt"],
 )
-
-ACCESS_TOKEN_EXPIRY = timedelta(minutes=15)
 
 
 def generate_password_hash(password: str) -> str:
@@ -26,7 +25,7 @@ def create_access_token(
 ) -> str:
     payload = {
         "user": user.model_dump(mode="json"),
-        "exp": datetime.now() + expiry,
+        "exp": datetime.now(timezone.utc) + expiry,
         "jti": str(uuid.uuid4()),
         "refresh": refresh,
     }
