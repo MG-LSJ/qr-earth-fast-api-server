@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from src.db.main import init_db
+from src.db.migration import run_migrations
 from src.entities.user.routes import user_router
 from src.entities.code.routes import code_router
 from src.entities.public.routes import public_router
@@ -9,7 +9,7 @@ from src.entities.public.routes import public_router
 @asynccontextmanager
 async def life_span(app: FastAPI):
     print("Server is starting")
-    await init_db()
+    run_migrations()
     yield
 
     print("Server is shutting down")

@@ -13,14 +13,15 @@ engine = AsyncEngine(
     )
 )
 
+# Use run_migration to create tables
 
-async def init_db():
-    async with engine.begin() as conn:
-        from src.entities.user.models import User
-        from src.entities.code.models import QRCode
-        from src.entities.transaction.models import Transaction
+# async def init_db():
+#     async with engine.begin() as conn:
+#         from src.entities.user.models import User
+#         from src.entities.code.models import QRCode
+#         from src.entities.transaction.models import Transaction
 
-        await conn.run_sync(SQLModel.metadata.create_all)
+#         await conn.run_sync(SQLModel.metadata.create_all)
 
 
 # SQL Model dosent support async natively
