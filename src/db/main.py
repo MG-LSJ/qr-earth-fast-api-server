@@ -10,7 +10,7 @@ DATABASE_URL = f"postgresql+asyncpg://{Config.DB_USER}:{Config.DB_PASSWORD}@{Con
 engine = AsyncEngine(
     create_engine(
         url=DATABASE_URL,
-        echo=True,
+        echo=False,
     )
 )
 
