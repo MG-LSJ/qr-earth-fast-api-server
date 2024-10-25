@@ -7,8 +7,8 @@ from src.auth.middleware import TokenBearer
 class AdminTokenBearer(TokenBearer):
 
     @override
-    def verify_token_data(self, token_data: dict):
-        super().verify_token_data(token_data)
+    async def verify_token_data(self, token_data: dict):
+        await super().verify_token_data(token_data)
         if token_data["admin"] is None:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
@@ -18,8 +18,8 @@ class AdminTokenBearer(TokenBearer):
 
 class AdminAccessTokenBearer(AdminTokenBearer):
     @override
-    def verify_token_data(self, token_data: dict):
-        super().verify_token_data(token_data)
+    async def verify_token_data(self, token_data: dict):
+        await super().verify_token_data(token_data)
         if token_data["refresh"] == True:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
@@ -29,8 +29,8 @@ class AdminAccessTokenBearer(AdminTokenBearer):
 
 class AdminRefreshTokenBearer(AdminTokenBearer):
     @override
-    def verify_token_data(self, token_data: dict):
-        super().verify_token_data(token_data)
+    async def verify_token_data(self, token_data: dict):
+        await super().verify_token_data(token_data)
         if token_data["refresh"] == False:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,

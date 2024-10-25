@@ -6,8 +6,8 @@ from src.auth.middleware import TokenBearer
 
 class UserTokenBearer(TokenBearer):
     @override
-    def verify_token_data(self, token_data: dict):
-        super().verify_token_data(token_data)
+    async def verify_token_data(self, token_data: dict):
+        await super().verify_token_data(token_data)
         if token_data["user"] is None:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
@@ -17,8 +17,8 @@ class UserTokenBearer(TokenBearer):
 
 class UserAccessTokenBearer(UserTokenBearer):
     @override
-    def verify_token_data(self, token_data: dict):
-        super().verify_token_data(token_data)
+    async def verify_token_data(self, token_data: dict):
+        await super().verify_token_data(token_data)
         if token_data["refresh"] == True:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
@@ -28,8 +28,8 @@ class UserAccessTokenBearer(UserTokenBearer):
 
 class UserRefreshTokenBearer(UserTokenBearer):
     @override
-    def verify_token_data(self, token_data: dict):
-        super().verify_token_data(token_data)
+    async def verify_token_data(self, token_data: dict):
+        await super().verify_token_data(token_data)
         if token_data["refresh"] == False:
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,

@@ -27,12 +27,12 @@ class TokenBearer(HTTPBearer):
                 detail="Invalid token",
             )
 
-        self.verify_token_data(token_data)
+        await self.verify_token_data(token_data)
 
         return token_data
 
-    def verify_token_data(self, token_data: dict):
-        if JTIBlocklistCache.exists(token_data["jti"]):
+    async def verify_token_data(self, token_data: dict):
+        if await JTIBlocklistCache.exists(token_data["jti"]):
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
                 detail="Invalid token",
