@@ -8,11 +8,14 @@ class Settings(BaseSettings):
     DB_PASSWORD: str = "password"
     DB_NAME: str = "test"
 
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str = "password"
+
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
-    FIXED_CODE: str
-    ADMIN_PASSWORD: str
+    HASHED_ADMIN_PASSWORD: str
 
     # MAIL_USRNAME: str
     # MAIL_PASSWORD: str

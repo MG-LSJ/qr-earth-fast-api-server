@@ -1,11 +1,11 @@
 from http import HTTPStatus
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPBearer
-from src.auth.utils import decode_access_token
-from src.entities.user.models import User
+from src.auth.tokens import decode_access_token
+from src.db.cache import JTIBlocklistCache
 
 
-class UserTokenBearer(HTTPBearer):
+class TokenBearer(HTTPBearer):
 
     def __init__(self, auto_error=True):
         super().__init__(auto_error=auto_error)
@@ -32,21 +32,7 @@ class UserTokenBearer(HTTPBearer):
         return token_data
 
     def verify_token_data(self, token_data: dict):
-        raise NotImplementedError("Subclasses must implement this method")
-
-
-class UserAccessTokenBearer(UserTokenBearer):
-    def verify_token_data(self, token_data: dict):
-        if token_data["refresh"] == True:
-            raise HTTPException(
-                status_code=HTTPStatus.UNAUTHORIZED,
-                detail="Invalid token",
-            )
-
-
-class UserRefreshTokenBearer(UserTokenBearer):
-    def verify_token_data(self, token_data: dict):
-        if token_data["refresh"] == False:
+        if JTIBlocklistCache.exists(token_data["jti"]):
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
                 detail="Invalid token",

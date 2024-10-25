@@ -1,43 +1,14 @@
 from http import HTTPStatus
 import uuid
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import JSONResponse
-from src.config import Config
 from src.db.main import get_session
-from src.entities.code.models import QRCode, RedeemCodeRequest
-from src.entities.code.service import QRCOdeService
+from src.entities.bin.service import DustBinService
+from src.entities.code.models import QRCode, QRCodeRedeem
+from src.entities.code.service import QRCodeService
 from src.entities.user.service import UserService
+from src.entities.user.middleware import user_access_token_bearer
 
 code_router = APIRouter()
-
-
-@code_router.get(
-    "/check_fixed",
-)
-async def check(fixed_code_id: str):
-    if fixed_code_id == Config.FIXED_CODE:
-        return JSONResponse(
-            content={"valid": True},
-        )
-    raise HTTPException(
-        status_code=HTTPStatus.NOT_FOUND,
-        detail="Invalid code",
-    )
-
-
-@code_router.get(
-    "/generate",
-    response_model=QRCode,
-)
-async def generate_code(
-    admin_password: str,
-    value: int = 10,
-    session=Depends(get_session),
-):
-    if admin_password != Config.ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
-    return await QRCOdeService.generate_qr_code(session, value)
 
 
 @code_router.get(
@@ -46,9 +17,9 @@ async def generate_code(
 )
 async def code_info(
     code_id: uuid.UUID,
-    session=Depends(get_session),
+    db_session=Depends(get_session),
 ):
-    qr_code = await QRCOdeService.get_qr_code_by_code(session, code_id)
+    qr_code = await QRCodeService.get_qr_code_by_id(db_session, code_id)
 
     if qr_code is None:
         raise HTTPException(status_code=400, detail="Invalid code")
@@ -61,20 +32,38 @@ async def code_info(
     response_model=QRCode,
 )
 async def redeem_code(
-    redeem_request: RedeemCodeRequest,
-    session=Depends(get_session),
+    data: QRCodeRedeem,
+    db_session=Depends(get_session),
+    token_data: dict = Depends(user_access_token_bearer),
 ):
-    qr_code = await QRCOdeService.get_qr_code_by_code(session, redeem_request.code_id)
+    dust_bin = await DustBinService.get_dust_bin_by_id(db_session, data.bin_id)
+
+    if dust_bin is None:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="Invalid bin",
+        )
+
+    qr_code = await QRCodeService.get_qr_code_by_id(db_session, data.code_id)
 
     if qr_code is None:
-        raise HTTPException(status_code=400, detail="Invalid code")
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail="Invalid code",
+        )
 
     if qr_code.redeemed:
-        raise HTTPException(status_code=400, detail="Code already redeemed")
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="Code already redeemed",
+        )
 
-    user = await UserService.get_user_by_id(session, redeem_request.user_id)
+    user = await UserService.get_user_by_id(db_session, token_data["user"]["id"])
 
     if user is None:
-        raise HTTPException(status_code=400, detail="User does not exist")
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail="User does not exist",
+        )
 
-    return await QRCOdeService.redeem_qr_code(session, qr_code, user)
+    return await QRCodeService.redeem_qr_code(db_session, qr_code, user)

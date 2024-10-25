@@ -11,6 +11,7 @@ from alembic import context
 from src.entities.code.models import QRCode
 from src.entities.user.models import User
 from src.entities.transaction.models import Transaction
+from src.entities.bin.models import DustBin
 
 
 # this is the Alembic Config object, which provides
@@ -22,7 +23,9 @@ from src.db.main import DATABASE_URL
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
+if config.config_file_name is not None and config.attributes.get(
+    "configure_logger", True
+):
     fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
