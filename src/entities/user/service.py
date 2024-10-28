@@ -1,14 +1,20 @@
 from datetime import datetime
 import uuid
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlmodel import paginate
 from src.entities.transaction.models import Transaction
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select, desc
 from src.entities.user.models import User
+from src.db.cache import Cache
 
 
 class UserService:
     @staticmethod
-    async def get_user_by_id(session: AsyncSession, user_id: uuid.UUID):
+    async def get_user_by_id(
+        session: AsyncSession,
+        user_id: uuid.UUID,
+    ):
         """
         Get a user by their ID
         """
@@ -17,7 +23,10 @@ class UserService:
         return result.first()
 
     @staticmethod
-    async def get_user_by_username(session: AsyncSession, username: str):
+    async def get_user_by_username(
+        session: AsyncSession,
+        username: str,
+    ):
         """
         Get a user by their username
         """
@@ -26,7 +35,10 @@ class UserService:
         return result.first()
 
     @staticmethod
-    async def get_user_by_email(session: AsyncSession, email: str):
+    async def get_user_by_email(
+        session: AsyncSession,
+        email: str,
+    ):
         """
         Get a user by their email
         """
@@ -35,7 +47,10 @@ class UserService:
         return result.first()
 
     @staticmethod
-    async def get_user_by_phone_number(session: AsyncSession, phone_number: str):
+    async def get_user_by_phone_number(
+        session: AsyncSession,
+        phone_number: str,
+    ):
         """
         Get a user by their phone number
         """
@@ -44,17 +59,26 @@ class UserService:
         return result.first()
 
     @staticmethod
-    async def create_user(session: AsyncSession, user: User):
+    async def create_user(
+        session: AsyncSession,
+        user: User,
+    ):
         """
         Create a new user
         """
+        global TOTAL_USERS
+
         session.add(user)
         await session.commit()
         await session.refresh(user)
+        await Cache.increment_total_users()
         return user
 
     @staticmethod
-    async def update_user(session: AsyncSession, user: User):
+    async def update_user(
+        session: AsyncSession,
+        user: User,
+    ):
         existing_user = await UserService.get_user_by_id(session, user.id)
         if existing_user is None:
             return None
@@ -67,20 +91,23 @@ class UserService:
         return existing_user
 
     @staticmethod
-    async def get_user_transactions(
-        session: AsyncSession, user_id: uuid.UUID, quantity: int = 10
-    ):
+    async def get_user_transactions_page(
+        session: AsyncSession,
+        user_id: uuid.UUID,
+    ) -> Page[Transaction]:
         statement = (
             select(Transaction)
             .where(Transaction.user_id == user_id)
             .order_by(desc(Transaction.timestamp))
-            .limit(quantity)
         )
-        result = await session.exec(statement)
-        return result.all()
+        return await paginate(session, statement)
 
     @staticmethod
-    async def redeem_user_points(session: AsyncSession, user: User, points: int):
+    async def redeem_user_points(
+        session: AsyncSession,
+        user: User,
+        points: int,
+    ):
         user.points -= points
         transaction = Transaction(
             id=uuid.uuid4(),

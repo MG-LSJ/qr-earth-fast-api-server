@@ -15,7 +15,14 @@ class QRCodeBase(SQLModel):
             default=uuid.uuid4,
         )
     )
+    value: int = Field(default=10)
 
+
+class QRCodeCreate(QRCodeBase):
+    pass
+
+
+class QRCode(QRCodeBase, table=True):
     created_at: datetime = Field(
         sa_column=Column(
             pg.TIMESTAMP(timezone=True),
@@ -23,10 +30,6 @@ class QRCodeBase(SQLModel):
         ),
     )
 
-    value: int = Field(default=10)
-
-
-class QRCode(QRCodeBase, table=True):
     user_id: uuid.UUID | None = Field(
         exclude=True,
         default=None,
@@ -42,6 +45,6 @@ class QRCode(QRCodeBase, table=True):
     )
 
 
-class RedeemCodeRequest(SQLModel):
+class QRCodeRedeem(SQLModel):
     code_id: uuid.UUID
-    user_id: uuid.UUID
+    bin_id: uuid.UUID

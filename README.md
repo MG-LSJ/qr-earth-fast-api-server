@@ -1,11 +1,11 @@
-QR Earth Server
+# QR Earth Server
 
-Written in Python's Fast Api & SQLModel (with SQLAlchemy 2.0).
-Currently deployed on azure
-
-Environemnt variables required to run:
+Written in Python's Fast Api & SQLModel (with SQLAlchemy 2.0). Uses PostgreSQL
+for database and Redis for caching. Currently deployed on azure
 
 api docs: https://qr-earth-bthhbwfcbxcvfrbp.eastus-01.azurewebsites.net/docs
+
+### Environemnt variables required to run:
 
 ```py
     DB_HOST: str = "localhost"
@@ -14,9 +14,12 @@ api docs: https://qr-earth-bthhbwfcbxcvfrbp.eastus-01.azurewebsites.net/docs
     DB_PASSWORD: str = "password"
     DB_NAME: str = "test"
 
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str = "password"
+
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
-    FIXED_CODE: str
-    ADMIN_PASSWORD: str
+    HASHED_ADMIN_PASSWORD: str
 ```

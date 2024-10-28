@@ -1,6 +1,6 @@
-from urllib import response
 from fastapi import APIRouter, Depends
-
+from fastapi_pagination import Page
+from src.db.cache import Cache
 from src.db.main import get_session
 from src.entities.public.models import UserLeaderboard
 from src.entities.public.service import PublicService
@@ -9,11 +9,11 @@ public_router = APIRouter()
 
 
 @public_router.get(
-    "/leaderboard",
-    response_model=list[UserLeaderboard],
+    "/leaderboards",
+    response_model=Page[UserLeaderboard],
 )
-async def get_leaderboard(limit: int = 10, session=Depends(get_session)):
-    return await PublicService.get_leaderboard(session, limit)
+async def get_leaderboard(session=Depends(get_session)):
+    return await PublicService.get_leaderboards_page(session)
 
 
 @public_router.get(
@@ -21,4 +21,4 @@ async def get_leaderboard(limit: int = 10, session=Depends(get_session)):
     response_model=int,
 )
 async def get_total_users(session=Depends(get_session)):
-    return await PublicService.get_total_users(session)
+    return await Cache.get_total_users()

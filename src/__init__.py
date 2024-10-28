@@ -1,26 +1,31 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from src.db.main import migrate_db
-from src.entities.user.routes import user_router
+from fastapi_pagination import add_pagination
+from src.db.main import startup, shutdown
+from src.entities.user.router import user_router
 from src.entities.code.routes import code_router
 from src.entities.public.routes import public_router
+from src.entities.bin.routes import bin_router
+from src.entities.admin.router import admin_router
 
 
 @asynccontextmanager
 async def life_span(app: FastAPI):
-    print("Server is starting")
-    await migrate_db()
+    # print("Server is starting")
+    await startup()
     yield
-
-    print("Server is shutting down")
+    await shutdown()
+    # print("Server is shutting down")
 
 
 app = FastAPI(
-    title="App",
-    description="App Description",
-    version="0.1.0",
+    title="QR Earth Server",
+    description="Api for QR Earth",
+    version="0.2.0",
     lifespan=life_span,
 )
+
+add_pagination(app)
 
 
 @app.get("/")
@@ -31,3 +36,5 @@ async def root():
 app.include_router(user_router, prefix="/users", tags=["user"])
 app.include_router(code_router, prefix="/codes", tags=["code"])
 app.include_router(public_router, prefix="/public", tags=["public"])
+app.include_router(bin_router, prefix="/bins", tags=["bin"])
+app.include_router(admin_router, prefix="/admin", tags=["admin"])

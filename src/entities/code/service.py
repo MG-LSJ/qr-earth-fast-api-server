@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Sequence
 import uuid
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
@@ -8,47 +7,52 @@ from src.entities.transaction.models import Transaction
 from src.entities.user.models import User
 
 
-class QRCOdeService:
+class QRCodeService:
     @staticmethod
-    async def generate_qr_code(session: AsyncSession, value: int) -> QRCode:
+    async def generate_qr_codes(
+        session: AsyncSession,
+        value: int,
+        quantity: int,
+    ) -> list[QRCode]:
         """
-        Generate a new qr_code
+        Generate new qr_codes
         """
-        qr_code = QRCode(
-            id=uuid.uuid4(),
-            created_at=datetime.now(),
-            redeemed=False,
-            value=value,
-            user_id=None,
-            redeemed_at=None,
-        )
+        qr_codes = []
+        for _ in range(quantity):
+            qr_code = QRCode(
+                id=uuid.uuid4(),
+                created_at=datetime.now(),
+                redeemed=False,
+                value=value,
+                user_id=None,
+                redeemed_at=None,
+            )
 
-        session.add(qr_code)
+            session.add(qr_code)
+            qr_codes.append(qr_code)
+
         await session.commit()
-        await session.refresh(qr_code)
-        return qr_code
+        return qr_codes
 
     @staticmethod
-    async def get_qr_code_by_code(
-        session: AsyncSession, code: uuid.UUID
-    ) -> QRCode | None:
+    async def get_qr_code_by_id(session: AsyncSession, id: uuid.UUID) -> QRCode | None:
         """
         Get a qr_code by its code
         """
-        statement = select(QRCode).where(QRCode.id == code)
+        statement = select(QRCode).where(QRCode.id == id)
         result = await session.exec(statement)
         return result.first()
 
-    @staticmethod
-    async def get_user_qr_codes(
-        session: AsyncSession, user_id: uuid.UUID
-    ) -> Sequence[QRCode]:
-        """
-        Get all qr_codes for a user
-        """
-        statement = select(QRCode).where(QRCode.user_id == user_id)
-        result = await session.exec(statement)
-        return result.all()
+    # @staticmethod
+    # async def get_user_qr_codes(
+    #     session: AsyncSession, user_id: uuid.UUID
+    # ) -> Sequence[QRCode]:
+    #     """
+    #     Get all qr_codes for a user
+    #     """
+    #     statement = select(QRCode).where(QRCode.user_id == user_id)
+    #     result = await session.exec(statement)
+    #     return result.all()
 
     @staticmethod
     async def redeem_qr_code(

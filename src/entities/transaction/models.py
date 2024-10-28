@@ -10,6 +10,8 @@ class Transaction(SQLModel, table=True):
     Point transaction table
     """
 
+    __tablename__ = "transactions"  # type: ignore
+
     id: uuid.UUID = Field(
         sa_column=Column(
             pg.UUID,
