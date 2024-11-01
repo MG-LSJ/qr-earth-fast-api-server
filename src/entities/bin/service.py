@@ -3,9 +3,21 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 import uuid
 from src.entities.bin.models import DustBin
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlmodel import paginate
 
 
 class DustBinService:
+    @staticmethod
+    async def get_all_dust_bins_page(
+        session: AsyncSession,
+    ) -> Page[DustBin]:
+        """
+        List all dust_bins
+        """
+        statement = select(DustBin)
+        return await paginate(session, statement)
+
     @staticmethod
     async def create_dust_bin(
         session: AsyncSession,
