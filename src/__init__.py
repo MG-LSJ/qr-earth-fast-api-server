@@ -8,6 +8,7 @@ from src.entities.public.routes import public_router
 from src.entities.bin.routes import bin_router
 from src.entities.admin.router import admin_router
 from fastapi.middleware.cors import CORSMiddleware
+from src.utils.config import Config
 
 
 @asynccontextmanager
@@ -26,14 +27,9 @@ app = FastAPI(
     lifespan=life_span,
 )
 
-origins = [
-    "http://192.168.0.21:8000",
-    "http://localhost:49807",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=Config.ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
